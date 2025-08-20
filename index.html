@@ -1,0 +1,190 @@
+
+
+<!DOCTYPE html>
+<html lang="ka">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Navito 3.0 - Unified Life-Line Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/utc.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/timezone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/isoWeek.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
+    <style>
+      :root {
+          --brand-color: #00F6FF;
+          --accent-color: #FF2ED1;
+          
+          --base-color: #0A0A0A;
+          --text-color: #E0E0E0;
+          --text-muted-color: #A0A0A0;
+          --surface-color: rgba(255, 255, 255, 0.03);
+          --surface-border-color: rgba(255, 255, 255, 0.1);
+          --surface-hover-color: rgba(255, 255, 255, 0.1);
+          --input-bg-color: rgba(0,0,0,0.3);
+      }
+
+      .light-theme {
+          --base-color: #F5F5F5;
+          --text-color: #1A1A1A;
+          --text-muted-color: #555555;
+          --surface-color: rgba(255, 255, 255, 0.7);
+          --surface-border-color: rgba(0, 0, 0, 0.1);
+          --surface-hover-color: rgba(0, 0, 0, 0.05);
+          --input-bg-color: rgba(0,0,0,0.05);
+      }
+
+      body {
+          font-family: 'Inter', system-ui, -apple-system, sans-serif;
+          background-color: var(--base-color);
+          color: var(--text-color);
+          overscroll-behavior: none;
+          transition: background-color 0.3s ease, color 0.3s ease;
+      }
+      .dark-theme body {
+          /* Generative Ambience Background */
+          background: linear-gradient(-45deg, #0a0a0a, #1a0f18, #0a0a0a, #0f1a18);
+          background-size: 400% 400%;
+          animation: gradient-bg 25s ease infinite;
+      }
+
+      @keyframes gradient-bg {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      .glass-effect {
+          background-color: var(--surface-color);
+          border: 1px solid var(--surface-border-color);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          transition: background-color 0.3s ease, border-color 0.3s ease;
+      }
+      .brand-text { color: var(--brand-color); }
+      .accent-text { color: var(--accent-color); }
+      .bg-brand-text { background-color: var(--brand-color); }
+      .accent-brand-color { accent-color: var(--brand-color); }
+      .accent-accent-color { accent-color: var(--accent-color); }
+      
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: var(--surface-hover-color); border-radius: 10px; }
+      ::-webkit-scrollbar-thumb { background: var(--brand-color); border-radius: 10px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+      
+      .loader {
+          border: 3px solid #4b5563; 
+          border-top: 3px solid var(--brand-color); 
+          border-radius: 50%; width: 16px; height: 16px;
+          animation: spin 1s linear infinite; display: inline-block;
+      }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+      .prose { max-width: none; color: var(--text-color); } 
+      .prose strong { color: var(--brand-color); }
+      .prose em { color: var(--accent-color); }
+      .prose ul > li::before { background-color: var(--brand-color); }
+      
+      /* Initial Loader Animation */
+      @keyframes wave-pulse {
+        0%, 100% { transform: scale(1); opacity: 0.8; }
+        50% { transform: scale(1.1); opacity: 1; }
+      }
+      .initial-loader-wave {
+        animation: wave-pulse 2s ease-in-out infinite;
+      }
+
+      /* Mic pulse animation */
+      @keyframes mic-pulse {
+        0% { box-shadow: 0 0 0 0 rgba(255, 46, 209, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(255, 46, 209, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 46, 209, 0); }
+      }
+      .mic-recording {
+        animation: mic-pulse 2s infinite;
+      }
+
+      /* Progressive Disclosure Animation */
+      @keyframes fade-in {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+
+      /* One Breath Pause Animation */
+      @keyframes breath-in {
+        0% { transform: scale(0.3); opacity: 0.5; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+      .animate-breath-in { animation: breath-in 4s ease-out forwards; }
+
+      @keyframes breath-hold {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+      .animate-breath-hold { animation: breath-hold 4s ease-in-out forwards; }
+      
+      @keyframes breath-out {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(0.3); opacity: 0.5; }
+      }
+      .animate-breath-out { animation: breath-out 6s ease-in forwards; }
+
+      /* Wake Word Orb Animation */
+      @keyframes orb-pulse {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 5px 2px rgba(255, 46, 209, 0.4); }
+        50% { transform: scale(1.1); box-shadow: 0 0 15px 5px rgba(255, 46, 209, 0.7); }
+      }
+      .animate-orb-pulse { animation: orb-pulse 3s ease-in-out infinite; }
+      
+      /* Focus Dashboard Widgets Animation */
+      @keyframes slide-in-up {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-slide-in-up { animation: slide-in-up 0.6s ease-out forwards; }
+
+      /* AI Advisor Scroll Highlight */
+      @keyframes pulse-once {
+        0%, 100% {
+          box-shadow: 0 0 0 0 rgba(0, 246, 255, 0);
+        }
+        50% {
+          box-shadow: 0 0 0 8px rgba(0, 246, 255, 0.4);
+        }
+      }
+      .animate-pulse-once {
+        animation: pulse-once 1.5s ease-out;
+        border-radius: 0.75rem; /* 12px */
+      }
+      
+      /* General Transitions */
+      input, button, select, textarea {
+        transition: all 0.2s ease-in-out;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.15.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.45.0",
+    "react/": "https://esm.sh/react@^19.1.1/",
+    "react": "https://esm.sh/react@^19.1.1",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.8.1",
+    "chart.js": "https://esm.sh/chart.js@^4.5.0",
+    "dayjs/": "https://esm.sh/dayjs@^1.11.13/",
+    "dayjs": "https://esm.sh/dayjs@^1.11.13",
+    "idb-keyval": "https://esm.sh/idb-keyval@^6.2.2"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
