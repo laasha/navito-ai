@@ -116,7 +116,7 @@ export async function getAIHintForExercise(
   currentData: any,
   extra: string | null = null
 ): Promise<AiResult> {
-  const prompt = `ვარჯიში: ${slug}\nმონაცემები: ${JSON.stringify(currentData ?? {}, null, 2)}\nდამატებით: ${extra ?? "—"}\nმიეცი 3–5 ხაზიანი ჰინტი.`;
+  const prompt = `ვარჯიში: ${slug}\nმონაცემები: ${JSON.stringify(currentData ?? {}, null, 2)}\ნდამატებით: ${extra ?? "—"}\nმიეცი 3–5 ხაზიანი ჰინტი.`;
   return callProxy(prompt);
 }
 
@@ -130,7 +130,7 @@ export async function generateProactiveInsight(
 export async function findRelatedHabits(
   current: { title?: string; tags?: string[]; recentNotes?: string } = {}
 ): Promise<AiResult> {
-  const prompt = `იპოვე 3–6 შესაბამისი ჩვევა ამ კონტექსტისთვის:\n${JSON.stringify(current ?? {}, null, 2)}`;
+  const prompt = `იპოვე 3–6 შესაბამისი ჩვევა ამ კონტექსტისთვის:\ნ${JSON.stringify(current ?? {}, null, 2)}`;
   return callProxy(prompt);
 }
 
@@ -162,14 +162,14 @@ export async function craftAffirmations(topic: string): Promise<AiResult> {
   return callProxy(prompt);
 }
 
-// ---------- Reviews (Monthly / Quarterly etc.) ----------
+// ---------- Reviews ----------
 export async function generateQuarterlyReview(context: any = {}): Promise<AiResult> {
   const prompt = `კვარტალური რევიუ (მიღწევები, what worked/what didn't, ფოკუსი Q+1):\n${JSON.stringify(context ?? {}, null, 2)}`;
   return callProxy(prompt);
 }
 
 export async function generateMonthlyReview(context: any = {}): Promise<AiResult> {
-  const prompt = `თვიური რევიუ (მოკლე შეჯამება, 3 გაკვეთილი, 3 პრიორიტეტი შემდეგ თვეზე):\n${JSON.stringify(context ?? {}, null, 2)}`;
+  const prompt = `თვიური რევიუ (შეჯამება, 3 გაკვეთილი, 3 პრიორიტეტი შემდეგ თვეზე):\n${JSON.stringify(context ?? {}, null, 2)}`;
   return callProxy(prompt);
 }
 
@@ -199,7 +199,7 @@ export async function createFocusPlan(context: any = {}): Promise<AiResult> {
   return callProxy(prompt);
 }
 
-// ---------- Education / Lessons (შენთვის, როგორც მასწავლებლისთვის სასარგებლო) ----------
+// ---------- Education / Lessons ----------
 export async function outlineLessonPlan(topic: string, grade: string = "2nd"): Promise<AiResult> {
   const prompt = `გაკვეთილის მოკლე გეგმა თემაზე "${topic}", კლასი: ${grade}. მიზნები, აქტივობები, შეფასება.`;
   return callProxy(prompt);
@@ -210,12 +210,11 @@ export async function proposeReflectionQuestions(context: string = ""): Promise<
   return callProxy(prompt);
 }
 
-export async function generateWeeklyPlan(goals: any[] = [], events: any[] = []): Promise<AiResult> {
-  const prompt = `კვირის გეგმა (მიზნები+ივენთები):\n${JSON.stringify({ goals, events }, null, 2)}`;
-  return callProxy(prompt);
-}
-
-export async function createHabitPlan(habit: string, difficulty: "easy" | "medium" | "hard" = "easy"): Promise<AiResult> {
+// ---------- Habits program ----------
+export async function createHabitPlan(
+  habit: string,
+  difficulty: "easy" | "medium" | "hard" = "easy"
+): Promise<AiResult> {
   const prompt = `7-დღიანი გეგმა ჩვევისთვის "${habit}" (${difficulty}). ყოველდღე 1 პატარა ნაბიჯი.`;
   return callProxy(prompt);
 }
