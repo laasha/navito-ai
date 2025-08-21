@@ -1,7 +1,6 @@
 // services/geminiService.ts
-// Safe Gemini client for GitHub Pages: the browser talks ONLY to your Cloudflare Worker.
-// No API key in the browser. If PROXY_URL is missing, we return a friendly error
-// instead of crashing the UI.
+// Safe Gemini client via Cloudflare Worker proxy.
+// ბრაუზერში API key აღარ გვჭირდება; თუ PROXY_URL არაა, ვაბრუნებთ შეცდომის ტექსტს და UI არ კრაშდება.
 
 const PROXY_URL = import.meta.env.VITE_GEMINI_PROXY_URL || "";
 
@@ -9,14 +8,14 @@ export type AiResult = { text?: string; error?: string };
 
 async function callProxy(prompt: string): Promise<AiResult> {
   try {
-    if (!PROXY_URL) {
-      return { error: "Gemini proxy URL is not set." };
-    }
+    if (!PROXY_URL) return { error: "Gemini proxy URL is not set." };
+
     const res = await fetch(PROXY_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt }),
     });
+
     if (!res.ok) {
       const msg = await res.text().catch(() => res.statusText);
       return { error: `Proxy error: ${msg}` };
@@ -29,38 +28,48 @@ async function callProxy(prompt: string): Promise<AiResult> {
   }
 }
 
-/** Lowest-level helper you can re-use anywhere */
+/** ყველაზე დაბალი დონის ჰელპერი */
 export async function generateTextSafe(prompt: string): Promise<AiResult> {
   return callProxy(prompt);
 }
 
-/** Used by LifeItemEditModal.tsx – returns learning/resources suggestions for a goal */
+/** LifeItemEditModal.tsx იყენებს — აბრუნებს რესურსებს/ნაბიჯებს მიზნისთვის */
 export async function generateGoalResources(goal: string, context: string = ""): Promise<AiResult> {
   const prompt = `
-შენი ამოცანაა მისცე გეგმა და რესურსები მიზნისთვის.
+შექმენი 3–5 ნაბიჯიანი გეგმა მიზნისთვის და თითო ნაბიჯთან ჩამოთვალე 1–2 კონკრეტული რესურსი.
 მიზანი: "${goal}"
 კონტექსტი: "${context}"
-
-მომეცი მოკლე actionable სია:
-- 3-5 ნაბიჯი
-- თითო ნაბიჯთან 1-2 ლინკი/რესურსი (სახელით)
-- ერთი პატარა რჩევა დასაწყებად.
+დაამატე მოკლე სტარტის რჩევა ბოლოს.
 `;
   return callProxy(prompt);
 }
 
-/** Optional helper used სხვა კომპონენტებში – იღებს AI ჰინტს სავარჯიშოსთვის */
+/** Exercise ჰინტი (სხვა კომპონენტებისთვისაც OK) */
 export async function getAIHintForExercise(
   slug: string,
   currentData: any,
   extra: string | null = null
 ): Promise<AiResult> {
   const prompt = `
-ვარჯიშო (${slug})თვის მომეცი მოკლე ჰინტი, რომ მომხმარებელმა გააგრძელოს.
-მიმდინარე ინფორმაცია: ${JSON.stringify(currentData ?? {}, null, 2)}
-დამატებით: ${extra ?? "არაფერი"}
+ვარჯიშო: ${slug}
+მიმდინარე მონაცემები: ${JSON.stringify(currentData ?? {}, null, 2)}
+დამატებით: ${extra ?? "—"}
+გმოწოდე 3–5 ხაზიანი მოკლე ჰინტი გასაგრძელებლად.
+`;
+  return callProxy(prompt);
+}
 
-გამოიტანე მაქსიმუმ 5 ხაზში, მარტივად.
+/** Natural input parser — ამას ითხოვს components/NaturalInputModal.tsx */
+export async function parseNaturalLanguageInput(raw: string): Promise<AiResult> {
+  const prompt = `
+დამედეგეგმე ტექსტის სტრუქტურირებული გაშიფვრით. ტექსტი: """${raw}"""
+დააბრუნე მოკლე, JSON-სამაგვარი აღწერა (არა კოდი), მაგალითად:
+- "ტიპი" (task/goal/event/note)
+- "სათაური"
+- "თარიღი/დედლაინი" თუ ჩანს (ISO ან ბუნებრივი აღწერა)
+- "პრიორიტეტი" (low/med/high) თუ ჩანს
+- "ქვე-საფეხურები" თუ ჩანს (სია)
+ტექსტურად მოკლედ, პუნქტებად.
 `;
   return callProxy(prompt);
 }
