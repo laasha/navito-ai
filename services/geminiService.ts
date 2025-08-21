@@ -1,13 +1,10 @@
 // services/geminiService.ts
 // Safe Gemini client via Cloudflare Worker proxy.
-// ბრაუზერში API key არასდროს გვჭირდება; ყველაფერი მიდის შენს Cloudflare Worker-ზე.
-// თუ VITE_GEMINI_PROXY_URL არ წერია build დროს, UI არ ჩავარდება — დააბრუნებს შეცდომის ტექსტს.
 
 const PROXY_URL = import.meta.env.VITE_GEMINI_PROXY_URL || "";
 
 export type AiResult = { text?: string; error?: string };
 
-// --------------- внутренний ჰელპერი ---------------
 async function callProxy(prompt: string): Promise<AiResult> {
   try {
     if (!PROXY_URL) return { error: "Gemini proxy URL is not set." };
@@ -22,28 +19,26 @@ async function callProxy(prompt: string): Promise<AiResult> {
       const msg = await res.text().catch(() => res.statusText);
       return { error: `Proxy error: ${msg}` };
     }
-
     const data = await res.json();
     if (data?.error) return { error: String(data.error) };
-
     return { text: String(data?.text ?? "") };
   } catch (e: any) {
     return { error: String(e?.message || e) };
   }
 }
 
-// --------------- Generic / base ---------------
+// ----------------- BASE -----------------
 export async function generateTextSafe(prompt: string): Promise<AiResult> {
   return callProxy(prompt);
 }
 
-// --------------- Goals / Tasks / Planning ---------------
+// ----------------- GOALS / TASKS -----------------
 export async function generateGoalResources(goal: string, context: string = ""): Promise<AiResult> {
   const prompt = `
 შექმენი 3–5 ნაბიჯიანი გეგმა მიზნისთვის და თითო ნაბიჯთან მიუთითე 1–2 კონკრეტული რესურსი (სახელი+მოკლე ახსნა).
 მიზანი: "${goal}"
 კონტექსტი: "${context}"
-დაამატე ბოლოს ერთი პატარა სტარტის რჩევა.
+დაამატე ბოლოს ერთი მცირე სტარტის რჩევა.
 `;
   return callProxy(prompt);
 }
@@ -75,7 +70,9 @@ export async function planShortSchedule(context: string): Promise<AiResult> {
   return callProxy(prompt);
 }
 
-export async function generateDailyBriefing(context: { date?: string; tasks?: any[]; goals?: any[] } = {}): Promise<AiResult> {
+export async function generateDailyBriefing(
+  context: { date?: string; tasks?: any[]; goals?: any[] } = {}
+): Promise<AiResult> {
   const prompt = `
 მომიმზადე „დღის ბრიფინგი“.
 თარიღი: ${context.date ?? "—"}
@@ -90,30 +87,7 @@ export async function generateDailyBriefing(context: { date?: string; tasks?: an
   return callProxy(prompt);
 }
 
-export async function generateWeeklyOverview(context: any = {}): Promise<AiResult> {
-  const prompt = `გადააქციე ეს კონტექსტი მოკლე weekly overview-ად (ბულეტები, მაქს 8):\n${JSON.stringify(context, null, 2)}`;
-  return callProxy(prompt);
-}
-
-export async function suggestHabitStacking(baseHabit: string): Promise<AiResult> {
-  const prompt = `მომეცი 3–5 habit stacking იდეა ჩვევისთვის "${baseHabit}", თითოეულზე 1 წინადადებიანი ახსნა.`;
-  return callProxy(prompt);
-}
-
-export async function findRelatedHabits(
-  current: { title?: string; tags?: string[]; recentNotes?: string } = {}
-): Promise<AiResult> {
-  const prompt = `
-მომიძებნე 3–6 "შესაბამისი ჩვევა" ამ კონტექსტისთვის:
-${JSON.stringify(current ?? {}, null, 2)}
-
-ფორმატი:
-- ჩვევა: <დასახელება> — რატომ ეხმარება (1 წინადადება)
-`;
-  return callProxy(prompt);
-}
-
-// --------------- Natural input / Parsing ---------------
+// ----------------- NATURAL INPUT / PARSING -----------------
 export async function parseNaturalLanguageInput(raw: string): Promise<AiResult> {
   const prompt = `
 დამიმუშავე ტექსტი სტრუქტურირებულად. ტექსტი: """${raw}"""
@@ -127,7 +101,7 @@ export async function parseNaturalLanguageInput(raw: string): Promise<AiResult> 
   return callProxy(prompt);
 }
 
-// --------------- Mind / Body / Mood ---------------
+// ----------------- MIND / BODY / MOOD -----------------
 export async function analyzeMindBodyConnection(entries: any): Promise<AiResult> {
   const prompt = `
 ეს არის მომხმარებლის „გონება/სხეული“ ჩანაწერების მოკლე სია.
@@ -162,7 +136,7 @@ ${JSON.stringify(recent ?? [], null, 2)}
   return callProxy(prompt);
 }
 
-// --------------- Insights / Coaching ---------------
+// ----------------- INSIGHTS / COACHING -----------------
 export async function getAIHintForExercise(
   slug: string,
   currentData: any,
@@ -193,43 +167,75 @@ ${JSON.stringify(context ?? {}, null, 2)}
   return callProxy(prompt);
 }
 
-// --------------- Extra helpers (გამოყენების შემთხვევაში აღარ შეგექმნება export error) ---------------
-export async function classifyLifeItem(text: string): Promise<AiResult> {
-  const prompt = `დააკლასიფიცირე ეს ჩანაწერი (task/goal/event/note) და მიუწერე მოკლე მიზეზი: """${text}"""`;
+export async function findRelatedHabits(
+  current: { title?: string; tags?: string[]; recentNotes?: string } = {}
+): Promise<AiResult> {
+  const prompt = `
+მომიძებნე 3–6 "შესაბამისი ჩვევა" ამ კონტექსტისთვის:
+${JSON.stringify(current ?? {}, null, 2)}
+
+ფორმატი:
+- ჩვევა: <დასახელება> — რატომ ეხმარება (1 წინადადება)
+`;
   return callProxy(prompt);
 }
 
+// ----------------- EVENING / REFLECTION -----------------
+export async function generateEveningReflectionPrompt(
+  context: { wins?: string[]; challenges?: string[]; mood?: string } = {}
+): Promise<AiResult> {
+  const prompt = `
+დამიწერე საღამოს მოკლე რეფლექსიის პრომპტი ამ დღის კონტექსტზე:
+მიღწევები: ${JSON.stringify(context.wins ?? [])}
+სირთულეები: ${JSON.stringify(context.challenges ?? [])}
+განწყობა: ${context.mood ?? "—"}
+
+გამოტანის ფორმატი:
+- 3 სწრაფი კითხვა დღეზე
+- 1 მადლიერების პუნქტი
+- 1 პატარა გეგმად ქცევადი ნაბიჯი ხვალისთვის
+`;
+  return callProxy(prompt);
+}
+
+// ----------------- EXTRA HELPERS (რათა აღარ აგდოს export errors) -----------------
+export async function generateWeeklyOverview(context: any = {}): Promise<AiResult> {
+  const prompt = `გადააქციე ეს კონტექსტი მოკლე weekly overview-ად (ბულეტები, მაქს 8):\n${JSON.stringify(context, null, 2)}`;
+  return callProxy(prompt);
+}
+export async function suggestHabitStacking(baseHabit: string): Promise<AiResult> {
+  const prompt = `მომეცი 3–5 habit stacking იდეა ჩვევისთვის "${baseHabit}", თითოეულზე 1 წინადადებიანი ახსნა.`;
+  return callProxy(prompt);
+}
+export async function classifyLifeItem(text: string): Promise<AiResult> {
+  const prompt = `დააკლასიფიცირე ჩანაწერი (task/goal/event/note) და მიუწერე მოკლე მიზეზი: """${text}"""`;
+  return callProxy(prompt);
+}
 export async function suggestMicroHabits(context: string): Promise<AiResult> {
   const prompt = `მომეცი 4–6 „მიკრო-ჩვევა“ ამ კონტექსტისთვის (ერთი წინადადება თითო): ${context}`;
   return callProxy(prompt);
 }
-
 export async function recommendBreathingExercise(context: string = ""): Promise<AiResult> {
   const prompt = `დაარეკომენდირე 1 სუნთქვითი სავარჯიშო ამ კონტექსტისთვის (დეტალური ნაბიჯები, 2–3 წთ): ${context}`;
   return callProxy(prompt);
 }
-
 export async function craftAffirmations(topic: string): Promise<AiResult> {
   const prompt = `შეადგინე 5 მოკლე, რეალისტური დადებითი აფირმაცია თემაზე: "${topic}"`;
   return callProxy(prompt);
 }
-
 export async function generateWeeklyPlan(goals: any[] = [], events: any[] = []): Promise<AiResult> {
-  const prompt = `შექმენი მოკლე εβδομάδας გეგმა ამ მიზნებსა და ღონისძიებებზე დაყრდნობით:\n${JSON.stringify({ goals, events }, null, 2)}`;
+  const prompt = `შექმენი მოკლე კვირის გეგმა ამ მიზნებსა და ღონისძიებებზე დაყრდნობით:\n${JSON.stringify({ goals, events }, null, 2)}`;
   return callProxy(prompt);
 }
-
 export async function createHabitPlan(habit: string, difficulty: "easy"|"medium"|"hard" = "easy"): Promise<AiResult> {
   const prompt = `შექმენი 7-დღიანი გეგმა ჩვევისთვის "${habit}" (${difficulty}) — ყოველდღე 1 მცირე ნაბიჯი.`;
   return callProxy(prompt);
 }
-
 export async function evaluateTaskLoad(tasks: any[] = []): Promise<AiResult> {
   const prompt = `შეაფასე მაქსიმუმ 10 ამოცანის დატვირთვა და მოარჩინე 3 მთავარი. სია:\n${JSON.stringify(tasks, null, 2)}`;
   return callProxy(prompt);
 }
-
 export async function proposeReflectionQuestions(context: string = ""): Promise<AiResult> {
-  const prompt = `მომეცი 5 მოკლე რეფლექსიის კითხვა ამ კონტექსტისთვის: ${context}`;
+  const prompt = `მომეცი 5 მოკლე რეფლექციის კითხვა ამ კონტექსტისთვის: ${context}`;
   return callProxy(prompt);
 }
