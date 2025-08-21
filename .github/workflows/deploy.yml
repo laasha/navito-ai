@@ -27,16 +27,15 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci || npm install
 
-      # უსაფრთხოდ დავამატოთ, თუ dev-deps-ში არ წერია
+      # უსაფრთხოდ — თუ plugin-react/dev-deps აკლია, დავამატოთ
       - name: Ensure Vite deps
         run: npm i -D vite @vitejs/plugin-react typescript
 
-      - name: Build
+      - name: Build (with env from Secrets)
         run: npm run build
         env:
-          # აი εδώ შემოვა Proxy URL GitHub Secret-იდან
           VITE_GEMINI_PROXY_URL: ${{ secrets.VITE_GEMINI_PROXY_URL }}
 
       - name: SPA fallback (404.html)
