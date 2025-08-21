@@ -1,16 +1,15 @@
-// src/services/geminiService.ts
-// Safe client for GitHub Pages — never crashes without a key.
-// Calls your Cloudflare Worker proxy instead of using the SDK in the browser.
+// services/geminiService.ts
+// Safe Gemini client for GitHub Pages: the browser talks ONLY to your Cloudflare Worker.
+// No API key in the browser. If PROXY_URL is missing, we return a friendly error
+// instead of crashing the UI.
 
-const PROXY_URL = import.meta.env.VITE_GEMINI_PROXY_URL || ""; // <-- set in .env.production
+const PROXY_URL = import.meta.env.VITE_GEMINI_PROXY_URL || "";
 
 export type AiResult = { text?: string; error?: string };
 
-/** Low-level helper you can use anywhere */
-export async function generateTextSafe(prompt: string): Promise<AiResult> {
+async function callProxy(prompt: string): Promise<AiResult> {
   try {
     if (!PROXY_URL) {
-      // keep the UI alive, just show a friendly message
       return { error: "Gemini proxy URL is not set." };
     }
     const res = await fetch(PROXY_URL, {
@@ -30,19 +29,38 @@ export async function generateTextSafe(prompt: string): Promise<AiResult> {
   }
 }
 
-/**
- * Adapter to keep existing imports working:
- * components that used `getAIHintForExercise(slug, data, null)` will still work.
- */
+/** Lowest-level helper you can re-use anywhere */
+export async function generateTextSafe(prompt: string): Promise<AiResult> {
+  return callProxy(prompt);
+}
+
+/** Used by LifeItemEditModal.tsx – returns learning/resources suggestions for a goal */
+export async function generateGoalResources(goal: string, context: string = ""): Promise<AiResult> {
+  const prompt = `
+შენი ამოცანაა მისცე გეგმა და რესურსები მიზნისთვის.
+მიზანი: "${goal}"
+კონტექსტი: "${context}"
+
+მომეცი მოკლე actionable სია:
+- 3-5 ნაბიჯი
+- თითო ნაბიჯთან 1-2 ლინკი/რესურსი (სახელით)
+- ერთი პატარა რჩევა დასაწყებად.
+`;
+  return callProxy(prompt);
+}
+
+/** Optional helper used სხვა კომპონენტებში – იღებს AI ჰინტს სავარჯიშოსთვის */
 export async function getAIHintForExercise(
   slug: string,
   currentData: any,
-  _unused: any
-): Promise<string> {
-  const prompt =
-    `გთხოვ, მომწერო მოკლე, პრაქტიკული მინიშნება სავარჯიშოზე "${slug}". ` +
-    `აი მონაცემები JSON-ში: ${JSON.stringify(currentData)}`;
-  const r = await generateTextSafe(prompt);
-  if (r.error) return `⚠️ ${r.error}`;
-  return r.text ?? "";
+  extra: string | null = null
+): Promise<AiResult> {
+  const prompt = `
+ვარჯიშო (${slug})თვის მომეცი მოკლე ჰინტი, რომ მომხმარებელმა გააგრძელოს.
+მიმდინარე ინფორმაცია: ${JSON.stringify(currentData ?? {}, null, 2)}
+დამატებით: ${extra ?? "არაფერი"}
+
+გამოიტანე მაქსიმუმ 5 ხაზში, მარტივად.
+`;
+  return callProxy(prompt);
 }
