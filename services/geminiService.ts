@@ -97,7 +97,7 @@ export async function decomposeGoal(goal: string): Promise<AiResult> {
   return callProxy(prompt);
 }
 
-/** Next step გენერატორი — components/home/NextStepWidget.tsx ითხოვს */
+/** Next step გენერატორი — components/home/NextStepWidget.tsx */
 export async function generateNextStepForGoal(
   goalTitle: string,
   context: { progress?: string; obstacles?: string } | null = null
@@ -115,15 +115,9 @@ export async function generateNextStepForGoal(
   return callProxy(prompt);
 }
 
-/** Proactive Insight — components/home/AiInsightWidget.tsx ითხოვს */
+/** Proactive Insight — components/home/AiInsightWidget.tsx */
 export async function generateProactiveInsight(
-  context: {
-    habits?: any;
-    mood?: any;
-    tasks?: any;
-    goals?: any;
-    schedule?: any;
-  } = {}
+  context: { habits?: any; mood?: any; tasks?: any; goals?: any; schedule?: any } = {}
 ): Promise<AiResult> {
   const prompt = `
 დააგენერირე ერთი „პრაქტიკული პროაქტიული ინსაიტი“ მომხმარებლის კვირის კონტექსტზე დაყრდნობით.
@@ -135,5 +129,33 @@ ${JSON.stringify(context ?? {}, null, 2)}
 - რატომ: <ერთ–ორ წინადადებაში ახსნა>
 - პატარა ნაბიჯი დღეს: <კონკრეტული 5–15 წთ საქმე>
 `;
+  return callProxy(prompt);
+}
+
+/** Related habits — components/home/RelatedHabitsWidget.tsx */
+export async function findRelatedHabits(
+  current: { title?: string; tags?: string[]; recentNotes?: string } = {}
+): Promise<AiResult> {
+  const prompt = `
+მომიძებნე 3–6 "შესაბამისი ჩვევა" ამ კონტექსტისთვის:
+${JSON.stringify(current ?? {}, null, 2)}
+
+ფორმატი (მოკლე ტექსტი, პუნქტებად):
+- ჩვევა: <დასახელება> — რატომ ეხმარება (1 წინადადება)
+`;
+  return callProxy(prompt);
+}
+
+/* ——— დამატებითი ჰელპერები (რადგან პროექტში შესაძლოა სხვაგანაც იყოს მოხმობილი) ——— */
+
+/** Habit stacking იდეები */
+export async function suggestHabitStacking(baseHabit: string): Promise<AiResult> {
+  const prompt = `მომეცი 3–5 habit stacking იდეა ჩვევისთვის "${baseHabit}", თითოეულზე 1 წინადადებიანი ახსნა.`;
+  return callProxy(prompt);
+}
+
+/** Weekly overview / recap */
+export async function generateWeeklyOverview(context: any = {}): Promise<AiResult> {
+  const prompt = `გადააქციე ეს კონტექსტი მოკლე weekly overview-ად (ბულეტები, მაქს 8):\n${JSON.stringify(context, null, 2)}`;
   return callProxy(prompt);
 }
