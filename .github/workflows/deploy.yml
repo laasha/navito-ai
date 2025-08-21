@@ -18,27 +18,29 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install project deps from package.json
+      - name: Install dependencies
         run: npm install
 
-      # ✅ დამატებით დავაყენოთ ბილდისთვის საჭირო dev-დამოკიდებულებები,
-      # რომ აღარ დაეცეს '@vitejs/plugin-react' / 'vite' / 'typescript'-ზე
-      - name: Ensure Vite build deps
-        run: npm i -D @vitejs/plugin-react vite typescript
+      # ზოგ რეპოებში ეს პაკეტები dev-deps-ში არაა; ვუზრუნველყოფთ რომ იყოს
+      - name: Ensure Vite deps
+        run: npm i -D vite @vitejs/plugin-react typescript
 
       - name: Build
         run: npm run build
+        env:
+          # ⬇️ აი აქ შემოვა GitHub Secret-იდან შენი Proxy URL
+          VITE_GEMINI_PROXY_URL: ${{ secrets.VITE_GEMINI_PROXY_URL }}
 
-      # SPA fallback (router ბილიკებზე 404 არ იყოს)
-      - name: Add 404.html
-        run: cp dist/index.html dist/404.html
+      - name: SPA fallback (404.html)
+        run: cp dist/index.html dist/404.html || echo "no dist/index.html yet"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
