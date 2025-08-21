@@ -85,16 +85,32 @@ ${JSON.stringify(entries ?? {}, null, 2)}
   return callProxy(prompt);
 }
 
-/* —— სურვილისამებრ დამატებითი სტაბები (თუ რომელიმე სხვა კომპონენტი გამოიძახებს) —— */
-
-/** ზოგადი „დავყოთ ნაბიჯებად“ ჰელპერი */
-export async function decomposeGoal(goal: string): Promise<AiResult> {
-  const prompt = `დაყავი მიზანი "${goal}" 4–6 მცირე, შესრულებად ნაბიჯად და თითოეულს მიეცი მოკლე თაიმლೈನ್.`;
-  return callProxy(prompt);
-}
-
 /** დღე/კვირის მოკლე გეგმის გენერაცია */
 export async function planShortSchedule(context: string): Promise<AiResult> {
   const prompt = `დამიგეგმე მოკლე დღე/კვირა ამ კონტექსტით:\n${context}\nგამოიტანე ბულეტებით, მაქს 8 ამოცანა.`;
+  return callProxy(prompt);
+}
+
+/** ზოგადი „დავყოთ ნაბიჯებად“ ჰელპერი */
+export async function decomposeGoal(goal: string): Promise<AiResult> {
+  const prompt = `დაყავი მიზანი "${goal}" 4–6 მცირე, შესრულებად ნაბიჯად და თითოეულს მიეცი მოკლე თაიმლაინი.`;
+  return callProxy(prompt);
+}
+
+/** Next step გენერატორი — components/home/NextStepWidget.tsx ითხოვს */
+export async function generateNextStepForGoal(
+  goalTitle: string,
+  context: { progress?: string; obstacles?: string } | null = null
+): Promise<AiResult> {
+  const prompt = `
+მომეცი მხოლოდ ერთი, ძალიან კონკრეტული შემდეგი ნაბიჯი მიზნისთვის.
+მიზანი: "${goalTitle}"
+მდგომარეობა/პროგრესი: ${JSON.stringify(context ?? {}, null, 2)}
+
+ფორმატი:
+- შემდეგი ნაბიჯი: <ერთი წინადადება, ქმედითი>
+- რატომ ახლა: <მოკლე მიზეზი>
+- ხანგრძლივობა: <დაახლ. დრო წუთებში>
+`;
   return callProxy(prompt);
 }
