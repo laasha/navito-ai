@@ -1,36 +1,28 @@
 // src/services/geminiService.ts
-// Safe wrapper so app doesn't crash on GitHub Pages without an API key
+// Safe client for GitHub Pages. Never crashes UI without a key.
+// It calls your proxy (Cloudflare Worker) instead of using the SDK in the browser.
 
-let GoogleGenerativeAI: any = null;
+const PROXY_URL = import.meta.env.VITE_GEMINI_PROXY_URL || ""; // set later
 
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-export const geminiEnabled = Boolean(GEMINI_KEY);
-
-function getClient() {
-  if (!geminiEnabled) return null;
-  try {
-    // @ts-ignore
-    return new (require("@google/generative-ai").GoogleGenerativeAI)(GEMINI_KEY!);
-  } catch (e) {
-    console.warn("Gemini SDK not available:", e);
-    return null;
-  }
-}
-
-/** Example safe function for text generation */
 export async function generateTextSafe(prompt: string): Promise<{ text?: string; error?: string }> {
-  if (!geminiEnabled || !GEMINI_KEY) {
-    return { error: "Gemini is disabled (no API key set)." };
-  }
   try {
-    const { GoogleGenerativeAI } = await import("@google/generative-ai");
-    const client = new GoogleGenerativeAI(GEMINI_KEY);
-    const model = client.getGenerativeModel({ model: "gemini-2.0-flash" });
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    return { text };
-  } catch (err: any) {
-    console.error(err);
-    return { error: String(err?.message || err) };
+    if (!PROXY_URL) {
+      // no proxy configured — keep UI alive
+      return { error: "Gemini proxy URL is not set." };
+    }
+    const res = await fetch(PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+    });
+    if (!res.ok) {
+      const msg = await res.text().catch(() => res.statusText);
+      return { error: `Proxy error: ${msg}` };
+    }
+    const data = await res.json();
+    if (data.error) return { error: String(data.error) };
+    return { text: String(data.text ?? "") };
+  } catch (e: any) {
+    return { error: String(e?.message || e) };
   }
 }
