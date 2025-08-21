@@ -24,16 +24,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          # ❌ ვაშლით cache-ს, რომ lock ფაილი აღარ მოითხოვოს
 
-      - name: Install dependencies
+      - name: Install project deps from package.json
         run: npm install
+
+      # ✅ დამატებით დავაყენოთ ბილდისთვის საჭირო dev-დამოკიდებულებები,
+      # რომ აღარ დაეცეს '@vitejs/plugin-react' / 'vite' / 'typescript'-ზე
+      - name: Ensure Vite build deps
+        run: npm i -D @vitejs/plugin-react vite typescript
 
       - name: Build
         run: npm run build
 
-      - name: SPA fallback (404.html)
-        run: cp dist/index.html dist/404.html || echo "no dist/index.html yet"
+      # SPA fallback (router ბილიკებზე 404 არ იყოს)
+      - name: Add 404.html
+        run: cp dist/index.html dist/404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
