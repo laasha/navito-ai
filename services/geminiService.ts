@@ -1,7 +1,7 @@
 // services/geminiService.ts
 // Safe Gemini client via Cloudflare Worker proxy.
 // ბრაუზერში API key არასდროს უნდა იყოს. ყველაფერი მიდის შენს Cloudflare Worker-ზე.
-// თუ VITE_GEMINI_PROXY_URL გამოტოვებულია, ვაბრუნებთ შეცდომის ტექსტს და UI არ კრაშდება.
+// თუ VITE_GEMINI_PROXY_URL არ წერია, ვაბრუნებთ შეცდომის ტექსტს და UI არ კრაშდება.
 
 const PROXY_URL = import.meta.env.VITE_GEMINI_PROXY_URL || "";
 
@@ -59,7 +59,9 @@ export async function planShortSchedule(context: string): Promise<AiResult> {
   return callProxy(prompt);
 }
 
-export async function generateDailyBriefing(context: { date?: string; tasks?: any[]; goals?: any[] } = {}): Promise<AiResult> {
+export async function generateDailyBriefing(
+  context: { date?: string; tasks?: any[]; goals?: any[] } = {}
+): Promise<AiResult> {
   const prompt = `დღის ბრიფინგი: ${JSON.stringify(context ?? {}, null, 2)} (ფოკუსი, 3 მთავარი ამოცანა, ერთი რჩევა)`;
   return callProxy(prompt);
 }
@@ -116,7 +118,7 @@ export async function getAIHintForExercise(
   currentData: any,
   extra: string | null = null
 ): Promise<AiResult> {
-  const prompt = `ვარჯიში: ${slug}\nმონაცემები: ${JSON.stringify(currentData ?? {}, null, 2)}\ნდამატებით: ${extra ?? "—"}\nმიეცი 3–5 ხაზიანი ჰინტი.`;
+  const prompt = `ვარჯიში: ${slug}\nმონაცემები: ${JSON.stringify(currentData ?? {}, null, 2)}\nდამატებით: ${extra ?? "—"}\nმიეცი 3–5 ხაზიანი ჰინტი.`;
   return callProxy(prompt);
 }
 
@@ -130,7 +132,7 @@ export async function generateProactiveInsight(
 export async function findRelatedHabits(
   current: { title?: string; tags?: string[]; recentNotes?: string } = {}
 ): Promise<AiResult> {
-  const prompt = `იპოვე 3–6 შესაბამისი ჩვევა ამ კონტექსტისთვის:\ნ${JSON.stringify(current ?? {}, null, 2)}`;
+  const prompt = `იპოვე 3–6 შესაბამისი ჩვევა ამ კონტექსტისთვის:\n${JSON.stringify(current ?? {}, null, 2)}`;
   return callProxy(prompt);
 }
 
@@ -216,5 +218,24 @@ export async function createHabitPlan(
   difficulty: "easy" | "medium" | "hard" = "easy"
 ): Promise<AiResult> {
   const prompt = `7-დღიანი გეგმა ჩვევისთვის "${habit}" (${difficulty}). ყოველდღე 1 პატარა ნაბიჯი.`;
+  return callProxy(prompt);
+}
+
+// ---------- Chat / CoPilot ----------
+export type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
+
+export async function getConversationalResponse(messages: ChatMessage[] | string): Promise<AiResult> {
+  // იხსნება როგორც მესიჯების სია, ასევე უბრალო სტრიქონი
+  const normalized =
+    typeof messages === "string"
+      ? [{ role: "user", content: messages }]
+      : messages;
+
+  const prompt = `
+შენ ხარ მოკლე და პრაქტიკული ასისტენტი. აი დიალოგი JSON-ით:
+${JSON.stringify(normalized, null, 2)}
+
+დააბრუნე მხოლოდ მოკლე პასუხი (ტექსტი), გარეშე ზედმეტი ფორმატირებისა.
+`;
   return callProxy(prompt);
 }
