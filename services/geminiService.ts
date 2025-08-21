@@ -1,6 +1,6 @@
 // services/geminiService.ts
 // Safe Gemini client via Cloudflare Worker proxy.
-// ბრაუზერში API key არ გვჭირდება; თუ PROXY_URL არაა, ვაბრუნებთ შეცდომას და UI არ კრაშდება.
+// ბრაუზერში API key აღარ გვჭირდება; თუ PROXY_URL არაა, ვაბრუნებთ შეცდომას და UI არ კრაშდება.
 
 const PROXY_URL = import.meta.env.VITE_GEMINI_PROXY_URL || "";
 
@@ -87,7 +87,7 @@ ${JSON.stringify(entries ?? {}, null, 2)}
 
 /** დღე/კვირის მოკლე გეგმის გენერაცია */
 export async function planShortSchedule(context: string): Promise<AiResult> {
-  const prompt = `დამიგეგმე მოკლე დღე/კვირა ამ კონტექსტით:\n${context}\nგამოიტანე ბულეტებით, მაქს 8 ამოცანა.`;
+  const prompt = `დამიგეგმე მოკლე დღე/კვირა ამ კონტექსტით:\n${context}\ნგამოიტანე ბულეტებით, მაქს 8 ამოცანა.`;
   return callProxy(prompt);
 }
 
@@ -105,7 +105,7 @@ export async function generateNextStepForGoal(
   const prompt = `
 მომეცი მხოლოდ ერთი, ძალიან კონკრეტული შემდეგი ნაბიჯი მიზნისთვის.
 მიზანი: "${goalTitle}"
-მდგომარეობა/პროგრესი: ${JSON.stringify(context ?? {}, null, 2)}
+მდგომარეობा/პროგრესი: ${JSON.stringify(context ?? {}, null, 2)}
 
 ფორმატი:
 - შემდეგი ნაბიჯი: <ერთი წინადადება, ქმედითი>
@@ -141,21 +141,33 @@ export async function findRelatedHabits(
 ${JSON.stringify(current ?? {}, null, 2)}
 
 ფორმატი (მოკლე ტექსტი, პუნქტებად):
-- ჩვევა: <დასახელება> — რატომ ეხმარება (1 წინადადება)
+- ჩვება: <დასახელება> — რატომ ეხმარება (1 წინადადება)
 `;
   return callProxy(prompt);
 }
 
-/* ——— დამატებითი ჰელპერები (რადგან პროექტში შესაძლოა სხვაგანაც იყოს მოხმობილი) ——— */
-
-/** Habit stacking იდეები */
-export async function suggestHabitStacking(baseHabit: string): Promise<AiResult> {
-  const prompt = `მომეცი 3–5 habit stacking იდეა ჩვევისთვის "${baseHabit}", თითოეულზე 1 წინადადებიანი ახსნა.`;
+/** Timeline pattern finder — pages/TimelinePage.tsx */
+export async function findTimelinePatterns(
+  timeline: Array<{ date?: string; mood?: string; energy?: string; note?: string }> = []
+): Promise<AiResult> {
+  const prompt = `
+მომიძებნე ნიმუშები/კავშირები ქრონოლოგიურ ჩანაწერებში (მუდი/ენერგია/შენიშვნები).
+გამოიტანე მოკლე პუნქტებად: პოვენილი პატერნი და 1 რეკომენდაცია თითოაზე.
+ჩანაწერები:
+${JSON.stringify(timeline ?? [], null, 2)}
+`;
   return callProxy(prompt);
 }
 
-/** Weekly overview / recap */
-export async function generateWeeklyOverview(context: any = {}): Promise<AiResult> {
-  const prompt = `გადააქციე ეს კონტექსტი მოკლე weekly overview-ად (ბულეტები, მაქს 8):\n${JSON.stringify(context, null, 2)}`;
+/** Future mood projection — pages/TimelinePage.tsx */
+export async function generateFutureMoodProjection(
+  recent: Array<{ date?: string; mood?: string; energy?: string; note?: string }> = []
+): Promise<AiResult> {
+  const prompt = `
+უახლოესი 2 კვირის "მუდის პროგნოზი" შექმენი ამ ბოლო ჩანაწერების მიხედვით.
+გამოიტანე მოკლე კალენდარული შეჯამება + 3 რჩევა რაც დაეხმარება პოზიტიურ ტენდენციას.
+ჩანაწერები:
+${JSON.stringify(recent ?? [], null, 2)}
+`;
   return callProxy(prompt);
 }
