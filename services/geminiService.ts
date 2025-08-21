@@ -101,3 +101,4 @@ export async function generateTextSafe(prompt: string): Promise<AiResult> {
   if (!prompt || !prompt.trim()) return { error: "Empty prompt." };
   return callProxy(prompt);
 }
+export const XYZ = makePromptFunction("XYZ");
