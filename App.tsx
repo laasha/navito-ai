@@ -21,6 +21,7 @@ import { Sidebar } from './components/Sidebar';
 import CoPilot from './components/CoPilot';
 import CommandPage from './pages/CommandPage';
 import PrintableTimelinePage from './pages/PrintableTimelinePage';
+import { BrowserRouter } from "react-router-dom";
 
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -87,7 +88,13 @@ const App: React.FC = () => {
     <ToastProvider>
       <AppProvider>
         <ModalProvider>
-          <AppContent />
+          <GoalProvider>
+            <ThemeProvider>
+              <BrowserRouter basename="/navito-ai">
+                <AppContext />
+              </BrowserRouter>
+            </ThemeProvider>
+          </GoalProvider>
         </ModalProvider>
       </AppProvider>
     </ToastProvider>
