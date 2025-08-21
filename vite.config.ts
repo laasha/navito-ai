@@ -3,5 +3,6 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/navito-ai/',   // ← ზუსტად შენი რეპოს სახელია
+  base: '/navito-ai/',    // ← ძალიან მნიშვნელოვანია GitHub Pages ქვეფოლდერისთვის
+  build: { outDir: 'dist' }
 })
