@@ -114,3 +114,26 @@ export async function generateNextStepForGoal(
 `;
   return callProxy(prompt);
 }
+
+/** Proactive Insight — components/home/AiInsightWidget.tsx ითხოვს */
+export async function generateProactiveInsight(
+  context: {
+    habits?: any;
+    mood?: any;
+    tasks?: any;
+    goals?: any;
+    schedule?: any;
+  } = {}
+): Promise<AiResult> {
+  const prompt = `
+დააგენერირე ერთი „პრაქტიკული პროაქტიული ინსაიტი“ მომხმარებლის კვირის კონტექსტზე დაყრდნობით.
+კონტექსტი:
+${JSON.stringify(context ?? {}, null, 2)}
+
+გამოტანის ფორმატი:
+- ინსაიტი: <ერთი ძლიერი წინადადება, ქმედებითი ტონით>
+- რატომ: <ერთ–ორ წინადადებაში ახსნა>
+- პატარა ნაბიჯი დღეს: <კონკრეტული 5–15 წთ საქმე>
+`;
+  return callProxy(prompt);
+}
